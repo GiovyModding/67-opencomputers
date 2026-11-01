@@ -1,6 +1,4 @@
--- 67 meme display per CC:Tweaked (CraftOS)
--- Adattato da OpenComputers a CC:Tweaked per Enigmatica 2: Expert
-
+-- 67 meme display per CC:Tweaked (CraftOS) - Ottimizzato per i 16 colori
 local term = term
 if not term.isColor() then
     error("Questo script richiede un monitor a colori di CC:Tweaked.")
@@ -61,13 +59,48 @@ term.setBackgroundColor(colors.white)
 term.setTextColor(colors.black)
 term.clear()
 
-local function rgbToCCColor(hexStr, x)
+-- Tabella dei 16 colori base di CC in formato RGB
+local ccColors = {
+    {colors.white, 240, 240, 240},
+    {colors.orange, 242, 178, 51},
+    {colors.magenta, 229, 127, 216},
+    {colors.lightBlue, 153, 178, 242},
+    {colors.yellow, 222, 222, 108},
+    {colors.lime, 127, 204, 25},
+    {colors.pink, 242, 178, 204},
+    {colors.gray, 76, 76, 76},
+    {colors.lightGray, 153, 153, 153},
+    {colors.cyan, 76, 153, 178},
+    {colors.purple, 178, 102, 229},
+    {colors.blue, 51, 102, 204},
+    {colors.brown, 127, 102, 76},
+    {colors.green, 87, 166, 78},
+    {colors.red, 204, 76, 76},
+    {colors.black, 25, 25, 25}
+}
+
+local function getNearestCCColor(hexStr, x)
     local p = (x - 1) * 6 + 1
     local hex = tonumber(string.sub(hexStr, p, p + 5), 16)
     local r = math.floor(hex / 65536)
     local g = math.floor((hex / 256) % 256)
     local b = hex % 256
-    return colors.packRGB(r / 255, g / 255, b / 255)
+    
+    local nearestColor = colors.white
+    local minDistance = 999999
+    
+    for _, col in ipairs(ccColors) do
+        local dr = r - col[2]
+        local dg = g - col[3]
+        local db = b - col[4]
+        local dist = dr*dr + dg*dg + db*db
+        if dist < minDistance then
+            minDistance = dist
+            nearestColor = col[1]
+        end
+    end
+    
+    return nearestColor
 end
 
 for y = 1, math.min(H, screenH * 2), 2 do
@@ -75,10 +108,10 @@ for y = 1, math.min(H, screenH * 2), 2 do
     if outY > screenH then break end
     
     for x = 1, math.min(W, screenW) do
-        local topColor = rgbToCCColor(data[y], x)
+        local topColor = getNearestCCColor(data[y], x)
         local bottomColor = topColor
         if y + 1 <= H then 
-            bottomColor = rgbToCCColor(data[y + 1], x) 
+            bottomColor = getNearestCCColor(data[y + 1], x) 
         end
         
         term.setCursorPos(x, outY)
